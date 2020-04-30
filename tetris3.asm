@@ -1,5 +1,3 @@
-;asm Tetris - just for fun
-
 CSEG    segment word public 'CODE'
 assume  CS:CSEG, DS:CSEG
         org  100h
