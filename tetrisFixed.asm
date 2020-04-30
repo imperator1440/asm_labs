@@ -1,4 +1,4 @@
-;asm Tetris - just for fun
+
 
 CSEG    segment word public 'CODE'
 assume  CS:CSEG, DS:CSEG
@@ -280,8 +280,7 @@ getTime:
          
          
 random  proc  
-;take last 4 bits of system timer
-;mov al, byte ptr ds:006Ch
+
 loopRand: 
         mov ah, 00h
         int 1Ah ;DX now hold number of clock ticks since midnight  
