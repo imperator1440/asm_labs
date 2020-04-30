@@ -1,3 +1,5 @@
+;asm Tetris - just for fun
+
 CSEG    segment word public 'CODE'
 assume  CS:CSEG, DS:CSEG
         org  100h
@@ -274,19 +276,25 @@ getTime:
         pop  ds
         ret
 
-
+         
+         
+         
 random  proc  
-loopRand:  
-        in ax, 40h 
-        inc al       
-        and al, 07h   
-        cmp al, 04h    
-    ja  loopRand           
+;take last 4 bits of system timer
+;mov al, byte ptr ds:006Ch
+loopRand: 
+        mov ah, 00h
+        int 1Ah ;DX now hold number of clock ticks since midnight  
+        mov ax, dx
+        inc al 
+        and al, 05h 
+        cmp al, 05h 
+    je  loopRand 
     mov randValue, al
     xor ax, ax
     mov al, randValue 
-    ret 
-endp
+    ret
+random endp
 
 
 initFigure proc
@@ -895,7 +903,6 @@ beepCheck:
     mov al, beepFlag
     cmp al, 0
     je exitCheck  
-    call beep
     xor ax, ax
     mov beepFlag, al 
     
@@ -909,42 +916,6 @@ exitCheck:
     ret
 endp
 
-beep    proc
-        pusha  
-        ;sound on
-        mov  cx,6
-next:   in   al,61h
-        or   al,3
-        out  61h,al
-        mov  al,10110110b
-        mov  dx,43h
-        out  dx,al
-        dec  dx
-        mov  al,cl
-        out  dx,al
-        out  dx,al
-        mov  ax,1
-        call delaySound
-        ;sound off
-        in   al,61h
-        and  al,11111100b
-        out  61h,al
-        loop next
-           
-        popa
-        ret
-endp  
-
-
-delaySound   proc
-        mov  bx,ax
-        call getTime
-        add  bx,ax
-tester: call getTime
-        cmp  ax,bx
-        jl   tester
-        ret
-endp
 
 TetrisFigures:
         db 0,0,0
