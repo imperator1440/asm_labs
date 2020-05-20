@@ -41,7 +41,7 @@ changeOffset MACRO min,newOffset
     je cnt_change
     
     neg dx
-    mov cx,0FFFFh
+    mov cx,0FFFFh  ; na levo
     jmp cnt_changeoffset
     
     cnt_change:
@@ -122,7 +122,7 @@ openFile ENDP
 ;=====================================================================================================================================================================================
 ;=====================================================================================================================================================================================
 ;=====================================================================================================================================================================================
-myFunc PROC
+deleteWords PROC
     push ax
     push bx
     push cx
@@ -148,10 +148,10 @@ myFunc PROC
     cmp is_end,1
     je myfunc_fin
     
-    changeOffset 0,1
+    changeOffset 0,1   ; pravo
     mov pos_dx,dx
     mov pos_ax,ax
-    changeOffset 1,1
+    changeOffset 1,1   ; levo
 
     call skip_spaces
     cmp is_end,1
@@ -170,7 +170,7 @@ myFunc PROC
     pop bx
     pop ax     
     ret
-myFunc ENDP
+deleteWords ENDP
 ;=====================================================================================================================================================================================
 ;=====================================================================================================================================================================================
 ;=====================================================================================================================================================================================
@@ -191,7 +191,7 @@ delete_word PROC
     dec dx
     neg dx
     
-    mov cx,0FFFFh
+    mov cx,0FFFFh  ;vlevo na word size
     int 21h
     
     mov on_start,1
@@ -209,7 +209,7 @@ delete_word PROC
     mov dx,offset tmp_symbol
     int 21h 
     
-    cmp ax,0
+    cmp ax,0 
     je cnt_delete_word1
     
     inc word_size
@@ -250,9 +250,9 @@ file_shift_left PROC;speed up by using buffer 100x
 
     dec shift_pos;delete - trap
 
-    changeOffset 1,shift_pos
+    changeOffset 1,shift_pos    ;levo
 
-    mov cx,tmp_count;in bx our saved string count
+    mov cx,tmp_count;in tmp_count our saved string count without word size
     mov dx,offset buffer
     mov bx,handle
     mov ah,40h
@@ -284,7 +284,7 @@ file_shift_left PROC;speed up by using buffer 100x
     cmp on_start,1
     je finish_word
 
-    mov shift_pos,10000
+    mov shift_pos,10000      ;buffer
     mov ax,word_size
     add shift_pos,ax
     
@@ -296,22 +296,22 @@ file_shift_left PROC;speed up by using buffer 100x
     mov dx,offset buffer
     int 21h
     
-    cmp ax,10000
+    cmp ax,10000 ;esli end of file
     jb fin_word_set_zero_tmp
     
-    ;change my pos in file {-(word_size+100) 100 - buffer}
-    changeOffset 1,shift_pos
+    ;change my pos in file 
+    changeOffset 1,shift_pos   ;=10k + word size 
     changeOffset 0,1
 
     ;now we can print our symbol to file
     mov bx,handle    
     mov cx,10000
     mov ah,40h
-    mov dx,offset buffer
+    mov dx,offset buffer   ;zapi's v file i udalenie slova
     int 21h 
     
     ;pos++{just so}
-    changeOffset 0,word_size;+word_size;HERE IS FUCKING MISTAKE(we've already changed offset by 100,add word_size)
+    changeOffset 0,word_size
     changeOffset 1,1
     jmp for_6
     
@@ -431,7 +431,7 @@ letter ENDP
 start:
 mov ax,@data
 mov ds,ax
-;взятие параметров из cmd
+
 jmp start_main
 
 terminate_prnt:
@@ -439,23 +439,21 @@ print error_no_args
 jmp terminate
 
 start_main:
-    mov cl,es:80h
-    mov ax, @data
-    mov ds, ax
-    cmp cl,0 ; нет параметров
-    je terminate_prnt; нет параметров - написать сообщение и выйти из проги
+    mov cl,es:80h  ;comand line
+    cmp cl,1  
+    jbe terminate_prnt
  
-    mov si,81h ; со смещением 81h начинается область параметров(пробел на самом деле)
-    cld;бесполезно, но риск того не стоил
+    mov si,81h 
+    ;cld
     xor di,di
 
-    inc si;нам не нужен пробел
-    dec cl;не надо выходить за пределы
-    ;в cx длина строки параметров
-    get_parm:
-    mov al, es:si;как раз таки тут начало строки с параметрами,читаем 1 символ в al
     inc si
-    mov [filepath + di] , al  ; помещаем его в filepath 
+    dec cl
+   
+    get_parm:
+    mov al, es:si
+     inc si
+    mov [filepath + di] , al 
 
     inc di
     loop get_parm
@@ -464,7 +462,7 @@ call openFile
 cmp is_end,1
 je terminate
 
-call myFunc
+call deleteWords
 
 terminate: 
     
